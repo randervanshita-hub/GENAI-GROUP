@@ -1,0 +1,14 @@
+[
+  { "ticker": "HDFCBANK",   "name": "HDFC Bank",                    "sector": "Banking",              "is_bank": true },
+  { "ticker": "ICICIBANK",  "name": "ICICI Bank",                   "sector": "Banking",              "is_bank": true },
+  { "ticker": "TCS",        "name": "Tata Consultancy Services",    "sector": "IT services" },
+  { "ticker": "INFY",       "name": "Infosys",                      "sector": "IT services" },
+  { "ticker": "RELIANCE",   "name": "Reliance Industries",          "sector": "Conglomerate (energy, retail, telecom)" },
+  { "ticker": "HINDUNILVR", "name": "Hindustan Unilever",           "sector": "FMCG" },
+  { "ticker": "ITC",        "name": "ITC",                          "sector": "FMCG and hotels" },
+  { "ticker": "ASIANPAINT", "name": "Asian Paints",                 "sector": "Paints and home decor" },
+  { "ticker": "TITAN",      "name": "Titan Company",                "sector": "Jewellery and lifestyle" },
+  { "ticker": "MARUTI",     "name": "Maruti Suzuki India",          "sector": "Automobiles" },
+  { "ticker": "BHARTIARTL", "name": "Bharti Airtel",                "sector": "Telecom" },
+  { "ticker": "SUNPHARMA",  "name": "Sun Pharmaceutical Industries", "sector": "Pharmaceuticals" }
+]

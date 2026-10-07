@@ -1,0 +1,19 @@
+{
+  "name": "arthavid",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Arthavid: an AI equity research analyst for Indian retail investors that reads filings, runs the numbers and fact-checks itself.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node --env-file=.env server.js",
+    "ingest": "node --env-file=.env scripts/ingest.js",
+    "eval": "node --env-file=.env scripts/eval.js",
+    "cost-report": "node --env-file=.env scripts/cost-report.js"
+  },
+  "dependencies": {
+    "unpdf": "^1.8.1"
+  }
+}

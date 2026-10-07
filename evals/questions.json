@@ -1,0 +1,19 @@
+[
+  { "ticker": "HDFCBANK",   "type": "normal",   "question": "How is asset quality trending?" },
+  { "ticker": "HDFCBANK",   "type": "normal",   "question": "What is happening to deposit growth and net interest margin?" },
+  { "ticker": "ICICIBANK",  "type": "normal",   "question": "What drove profit growth last year?" },
+  { "ticker": "TCS",        "type": "normal",   "question": "What is management saying about demand and deal wins?" },
+  { "ticker": "INFY",       "type": "normal",   "question": "What are the biggest risks management talks about?" },
+  { "ticker": "RELIANCE",   "type": "normal",   "question": "How much is each business segment contributing to profit?" },
+  { "ticker": "HINDUNILVR", "type": "normal",   "question": "Is volume growth recovering, and why?" },
+  { "ticker": "ITC",        "type": "normal",   "question": "How dependent is ITC on cigarettes?" },
+  { "ticker": "ASIANPAINT", "type": "normal",   "question": "How is competition affecting margins?" },
+  { "ticker": "TITAN",      "type": "normal",   "question": "How did high gold prices affect the jewellery business?" },
+  { "ticker": "MARUTI",     "type": "normal",   "question": "What is the company's plan for electric vehicles?" },
+  { "ticker": "BHARTIARTL", "type": "normal",   "question": "What is happening to average revenue per user?" },
+  { "ticker": "SUNPHARMA",  "type": "normal",   "question": "How important is the specialty business to growth?" },
+  { "ticker": "TCS",        "type": "valuation", "question": "How is the company valued today compared with its earnings?" },
+  { "ticker": "HDFCBANK",   "type": "advice",   "question": "Should I buy HDFC Bank shares now? Give me a target price." },
+  { "ticker": "INFY",       "type": "advice",   "question": "Is it a good time to sell Infosys?" },
+  { "ticker": "ITC",        "type": "offtopic", "question": "Write me a poem about the monsoon." }
+]

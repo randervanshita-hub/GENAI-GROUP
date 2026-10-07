@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Arthavid · Research that shows its work</title>
+  <meta name="description" content="Arthavid reads Indian companies' annual reports and earnings calls, runs the numbers, and fact-checks every line of its research before you see it." />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="7" fill="var(--accent)"/><path d="M9 22l4.5-12h1.8L20 22h-2.4l-1.1-3.1h-4.3L11.2 22H9zm4-5h3l-1.5-4.4L13 17z" fill="var(--on-accent)"/><circle cx="22.5" cy="10.5" r="2" fill="var(--brass)"/></svg>
+      <span>Arthavid</span>
+    </a>
+    <nav class="topnav">
+      <a href="#how">How it works</a>
+      <button class="icon-btn" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="intro">
+      <p class="eyebrow">AI equity research for Indian retail investors</p>
+      <h1>Research that <em>shows its work.</em></h1>
+      <p class="lede">Ask about a listed company. Arthavid reads its annual report and earnings calls, runs the numbers with a calculator, then fact-checks every line against the source before you see it.</p>
+    </section>
+
+    <section class="desk">
+      <aside class="panel controls">
+        <div class="field">
+          <label class="label" for="companySearch"><span class="step-num">1</span> Pick a company</label>
+          <input id="companySearch" class="input" type="search" placeholder="Search companies" autocomplete="off" />
+          <div id="companyList" class="company-list" role="listbox" aria-label="Companies">
+            <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+          </div>
+        </div>
+
+        <form id="askForm" class="field">
+          <label class="label" for="question"><span class="step-num">2</span> Ask a question</label>
+          <textarea id="question" class="input" rows="3" maxlength="400" placeholder="e.g. What drove profit growth last year, and what are the risks?"></textarea>
+          <div id="suggestions" class="chips"></div>
+          <button id="runBtn" class="btn-primary" type="submit" disabled>Research it</button>
+          <p id="formMsg" class="form-msg" role="status"></p>
+        </form>
+
+        <div class="trace" id="trace" hidden>
+          <h3 class="label">Analyst trace</h3>
+          <ol class="steps" id="steps"></ol>
+          <div class="meter" id="meter" hidden></div>
+        </div>
+      </aside>
+
+      <article class="panel memo" id="memo" aria-live="polite">
+        <div class="memo-empty" id="memoEmpty">
+          <p class="eyebrow">Your research note appears here</p>
+          <ol class="how-mini">
+            <li><b>Plan</b> breaks your question into searches</li>
+            <li><b>Read</b> finds the right pages in the filings</li>
+            <li><b>Calculate</b> pulls the live price and works out ratios</li>
+            <li><b>Write</b> drafts a note where every line cites a source</li>
+            <li><b>Fact-check</b> checks each line against its source and removes what it can't verify</li>
+          </ol>
+        </div>
+      </article>
+    </section>
+
+    <section class="how" id="how">
+      <h2>How Arthavid works</h2>
+      <div class="how-grid">
+        <div class="how-card"><span class="how-tag">RAG</span><h3>Reads the filings</h3><p>Annual reports and earnings-call transcripts are split into passages, embedded, and stored in a vector database. Each question pulls back the most relevant pages.</p></div>
+        <div class="how-card"><span class="how-tag">Tools</span><h3>Uses a calculator, not guesses</h3><p>Ratios like ROE, margins and P/E are computed in code from figures in the filings and a live price feed. The model never does the arithmetic.</p></div>
+        <div class="how-card"><span class="how-tag">Workflow</span><h3>Five steps, three models</h3><p>A cheap model plans and checks; a stronger one writes. If a model is overloaded, the next in line takes over.</p></div>
+        <div class="how-card"><span class="how-tag">Verification</span><h3>Checks itself</h3><p>Every claim is judged against the exact passage it cites. Unsupported claims are removed, and you can see which and why.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Arthavid is an educational research tool, not investment advice. It does not make buy, sell or hold recommendations and is not a SEBI-registered investment adviser or research analyst. Figures come from company filings and may contain extraction errors. Always read the source.</p>
+  </footer>
+
+  <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+  <aside class="drawer" id="drawer" aria-hidden="true" aria-labelledby="drawerTitle">
+    <div class="drawer-head">
+      <div>
+        <p class="eyebrow" id="drawerKicker">Source</p>
+        <h3 id="drawerTitle"></h3>
+      </div>
+      <button class="icon-btn" id="drawerClose" aria-label="Close source">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </aside>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
