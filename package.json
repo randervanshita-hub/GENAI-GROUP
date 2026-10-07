@@ -11,7 +11,8 @@
     "dev": "node --env-file=.env server.js",
     "ingest": "node --env-file=.env scripts/ingest.js",
     "eval": "node --env-file=.env scripts/eval.js",
-    "cost-report": "node --env-file=.env scripts/cost-report.js"
+    "cost-report": "node --env-file=.env scripts/cost-report.js",
+    "fetch-filings": "node scripts/fetch-filings.js"
   },
   "dependencies": {
     "unpdf": "^1.8.1"

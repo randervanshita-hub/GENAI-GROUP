@@ -5,7 +5,7 @@
 import { db } from '../lib/supabase.js'
 import { runAnalysis } from '../lib/pipeline.js'
 
-export const maxDuration = 60
+export const maxDuration = 120
 
 const DAILY_CAP_PER_VISITOR = 15
 const MAX_QUESTION_CHARS = 400

@@ -106,7 +106,11 @@ async function ingestFile(company, file) {
   const fileName = path.basename(file)
   const meta = describe(fileName)
   const [existing] = await db.select('documents', `ticker=eq.${company.ticker}&file_name=eq.${encodeURIComponent(fileName)}`)
-  if (existing && !force) return console.log(`  - ${fileName}: already ingested (use --force to redo)`)
+  if (existing && !force) {
+    const [hasChunk] = await db.select('chunks', `select=id&document_id=eq.${existing.id}&limit=1`)
+    if (hasChunk) return console.log(`  - ${fileName}: already ingested (use --force to redo)`)
+  }
+  // Clears a previous run that was interrupted before its passages were stored.
   if (existing) await db.remove('documents', `id=eq.${existing.id}`)
 
   const pdf = await getDocumentProxy(new Uint8Array(await readFile(file)))
@@ -116,8 +120,6 @@ async function ingestFile(company, file) {
   console.log(`  - ${fileName}: ${totalPages} pages -> ${chunks.length} passages`)
   if (!chunks.length) return console.log('    ! no text found (scanned PDF?) - skipped')
 
-  const [doc] = await db.insert('documents', [{ ticker: company.ticker, file_name: fileName, page_count: totalPages, ...meta }])
-
   // Prefix each passage with its source so the embedding knows the context.
   const { vectors, inputTokens, costInr } = await embed(
     chunks.map((c) => `${company.name} - ${meta.title} - page ${c.page}\n${c.content}`),
@@ -125,6 +127,9 @@ async function ingestFile(company, file) {
   )
   totalEmbedTokens += inputTokens
   totalCostInr += costInr
+
+  // Only record the document once its embeddings exist, so a failed run leaves nothing half-done.
+  const [doc] = await db.insert('documents', [{ ticker: company.ticker, file_name: fileName, page_count: totalPages, ...meta }])
 
   const rows = chunks.map((c, i) => ({
     document_id: doc.id,
@@ -156,7 +161,13 @@ async function main() {
       try {
         await ingestFile(company, path.join(dir, f))
       } catch (err) {
-        console.error(`    ! ${f} failed: ${err.message}`)
+        console.error(`    ! ${f} failed: ${err.message.split('
+')[0]}`)
+        if (err.dailyQuota) {
+          console.error('
+Stopped: the Gemini daily quota is used up. Enable billing or run again tomorrow; finished files are kept.')
+          process.exit(1)
+        }
       }
     }
   }
