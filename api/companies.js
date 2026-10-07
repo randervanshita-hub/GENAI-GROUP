@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   try {
     const [companies, documents] = await Promise.all([
       db.select('companies', 'select=ticker,name,sector,is_bank&order=name.asc'),
-      db.select('documents', 'select=ticker,title,doc_type,fiscal_year'),
+      db.select('documents', 'select=ticker,title,doc_type,fiscal_year,page_count'),
     ])
     const list = companies.map((c) => ({ ...c, documents: documents.filter((d) => d.ticker === c.ticker) }))
     res.setHeader('Content-Type', 'application/json')

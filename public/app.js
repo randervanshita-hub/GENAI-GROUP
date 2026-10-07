@@ -45,18 +45,6 @@ function visitorId() {
   return id
 }
 
-// ---------- theme ----------
-const savedTheme = store('arthavid.theme')
-if (savedTheme) document.documentElement.dataset.theme = savedTheme
-$('themeToggle').addEventListener('click', () => {
-  const dark = document.documentElement.dataset.theme
-    ? document.documentElement.dataset.theme === 'dark'
-    : matchMedia('(prefers-color-scheme: dark)').matches
-  const next = dark ? 'light' : 'dark'
-  document.documentElement.dataset.theme = next
-  store('arthavid.theme', next)
-})
-
 // ---------- companies ----------
 async function loadCompanies() {
   try {
@@ -65,10 +53,19 @@ async function loadCompanies() {
     if (!res.ok) throw new Error(json.error)
     state.companies = json.companies
     renderCompanies()
+    renderStats()
     if (!state.companies.length) $('companyList').innerHTML = '<p class="company-meta">No companies have been loaded yet. Run <code>npm run ingest</code>.</p>'
   } catch {
     $('companyList').innerHTML = '<p class="form-msg">Could not load companies. Refresh to try again.</p>'
   }
+}
+
+// Hero stats reflect what is actually loaded, not a marketing number.
+function renderStats() {
+  if (!state.companies.length) return
+  const pages = state.companies.flatMap((c) => c.documents).reduce((n, d) => n + (d.page_count || 0), 0)
+  $('statCompanies').textContent = state.companies.length
+  if (pages) $('statPages').textContent = pages.toLocaleString('en-IN')
 }
 
 function renderCompanies() {
@@ -292,7 +289,7 @@ function renderMemo(m) {
 
   for (const sec of m.sections) {
     const cls = /bull/i.test(sec.title) ? 'bull' : /bear/i.test(sec.title) ? 'bear' : ''
-    html += `<section class="section ${cls}"><h4>${esc(sec.title)}</h4>${sec.claims.map(renderClaim).join('')}</section>`
+    html += `<section class="memo-section ${cls}"><h4>${esc(sec.title)}</h4>${sec.claims.map(renderClaim).join('')}</section>`
   }
 
   if (m.gaps?.length) html += `<div class="subpanel"><h4>What the filings didn't cover</h4><ul class="gaps">${m.gaps.map((g) => `<li>${esc(g)}</li>`).join('')}</ul></div>`
