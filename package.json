@@ -15,6 +15,7 @@
     "fetch-filings": "node scripts/fetch-filings.js"
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.3.1",
     "unpdf": "^1.8.1"
   }
 }

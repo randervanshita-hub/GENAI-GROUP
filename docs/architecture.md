@@ -7,7 +7,7 @@ flowchart LR
   subgraph Pipeline [api/analyze: one request, streamed step by step]
     P[1. Plan<br/>gemini-3.1-flash-lite<br/>scope check + search queries]
     P -->|off-topic| X[Polite refusal]
-    P --> R[2. Retrieve<br/>gemini-embedding-2<br/>+ pgvector search]
+    P --> R[2. Retrieve<br/>bge-small, open model run locally<br/>+ pgvector search]
     P --> T[3. Tools<br/>Yahoo Finance price feed<br/>+ ratio calculator in code]
     R --> D[4. Draft<br/>gemini-3.8-flash<br/>every claim cites S# or T#]
     T --> D
@@ -18,7 +18,7 @@ flowchart LR
   C --> L[(runs table:<br/>tokens, ₹, latency per step)]
 
   subgraph Offline [scripts/ingest: once per filing]
-    F[Annual reports +<br/>earnings-call PDFs] --> K[Split into passages<br/>+ embed]
+    F[Annual reports +<br/>earnings-call PDFs] --> K[Split into passages<br/>+ embed locally with bge-small]
     K --> V[(Supabase pgvector)]
     F --> E[Extract financials<br/>gemini-3.8-flash] --> FIN[(financials table)]
   end
@@ -31,3 +31,4 @@ flowchart LR
 - A proprietary API (Gemini) instead of an open model: no GPU to host, strong at long financial documents, and a free tier for development.
 - The cheapest model handles planning and fact-checking, which are short, structured tasks. The stronger model is used only for writing, where quality shows.
 - Each tier has a fallback chain, because the most popular models return 503 errors at peak times.
+- Embeddings use an **open model run locally** (BAAI bge-small-en-v1.5, 384 dimensions, via ONNX Runtime). It is free with no quota, which matters because the free Gemini tier allows only 1,000 embedding requests a day and our 12 companies need about 11,000 passages embedded. Search quality is slightly lower than Gemini's embedding model, but the fact-checker catches claims built on weak passages.

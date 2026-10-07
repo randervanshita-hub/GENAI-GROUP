@@ -13,7 +13,8 @@ import { readFile, readdir } from 'node:fs/promises'
 import path from 'node:path'
 import { extractText, getDocumentProxy } from 'unpdf'
 import { db } from '../lib/supabase.js'
-import { embed, generateJson } from '../lib/gemini.js'
+import { generateJson } from '../lib/gemini.js'
+import { embed } from '../lib/embeddings.js'
 import { EXTRACT_SYSTEM, EXTRACT_SCHEMA } from '../lib/prompts.js'
 
 const DATA = path.resolve('data')
@@ -123,7 +124,7 @@ async function ingestFile(company, file) {
   // Prefix each passage with its source so the embedding knows the context.
   const { vectors, inputTokens, costInr } = await embed(
     chunks.map((c) => `${company.name} - ${meta.title} - page ${c.page}\n${c.content}`),
-    'RETRIEVAL_DOCUMENT',
+    'passage',
   )
   totalEmbedTokens += inputTokens
   totalCostInr += costInr
@@ -139,7 +140,7 @@ async function ingestFile(company, file) {
     embedding: `[${vectors[i].join(',')}]`,
   }))
   for (let i = 0; i < rows.length; i += 200) await db.insert('chunks', rows.slice(i, i + 200), { returning: false })
-  console.log(`    stored ${rows.length} passages (~${inputTokens.toLocaleString()} embedding tokens)`)
+  console.log(`    stored ${rows.length} passages (~${inputTokens.toLocaleString()} tokens embedded locally)`)
 
   if (meta.doc_type === 'annual_report') await extractFinancials(company, pages)
 }
@@ -169,7 +170,7 @@ async function main() {
       }
     }
   }
-  console.log(`\nDone. Embedding tokens: ~${totalEmbedTokens.toLocaleString()}, one-off ingestion cost: ~Rs ${totalCostInr.toFixed(2)}`)
+  console.log(`\nDone. Embedded ~${totalEmbedTokens.toLocaleString()} tokens locally (free). Gemini cost for financials extraction: ~Rs ${totalCostInr.toFixed(2)}`)
 }
 
 main().catch((err) => {

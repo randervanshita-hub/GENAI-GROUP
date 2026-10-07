@@ -2,7 +2,7 @@
 -- Run this once in Supabase: Dashboard -> SQL Editor -> New query -> paste -> Run.
 -- Safe to re-run: every statement is idempotent.
 
--- pgvector lets Postgres store embeddings (lists of 768 numbers that capture the
+-- pgvector lets Postgres store embeddings (lists of 384 numbers that capture the
 -- meaning of a passage) and find the passages closest in meaning to a question.
 create extension if not exists vector;
 
@@ -35,7 +35,7 @@ create table if not exists chunks (
   ticker      text not null,
   page        int not null,
   content     text not null,
-  embedding   vector(768) not null
+  embedding   vector(384) not null
 );
 create index if not exists chunks_ticker_idx on chunks (ticker);
 create index if not exists chunks_embedding_idx on chunks using hnsw (embedding vector_cosine_ops);
@@ -81,7 +81,7 @@ create index if not exists runs_cache_idx on runs (ticker, question_key, created
 create index if not exists runs_visitor_idx on runs (visitor_id, created_at desc);
 
 -- Retrieval: the k passages for one company closest in meaning to the query.
-create or replace function match_chunks(query_embedding vector(768), p_ticker text, match_count int default 6)
+create or replace function match_chunks(query_embedding vector(384), p_ticker text, match_count int default 6)
 returns table (id bigint, document_id bigint, page int, content text, similarity float)
 language sql stable as $$
   select c.id, c.document_id, c.page, c.content, 1 - (c.embedding <=> query_embedding) as similarity
