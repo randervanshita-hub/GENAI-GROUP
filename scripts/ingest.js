@@ -8,6 +8,7 @@
 //   npm run ingest                 ingest every new PDF
 //   npm run ingest -- HDFCBANK     only one company
 //   npm run ingest -- --force      re-ingest PDFs already in the database
+//   npm run ingest -- --financials-only INFY   only redo the financial-figures extraction
 
 import { readFile, readdir } from 'node:fs/promises'
 import path from 'node:path'
@@ -24,6 +25,8 @@ const MIN_PAGE_CHARS = 150
 
 const args = process.argv.slice(2)
 const force = args.includes('--force')
+// Re-run only the financial-figures extraction from annual reports, without re-embedding.
+const financialsOnly = args.includes('--financials-only')
 const only = args.filter((a) => !a.startsWith('--')).map((a) => a.toUpperCase())
 
 let totalEmbedTokens = 0
@@ -56,24 +59,31 @@ function chunkPage(text, page) {
   return out
 }
 
-// Score pages that look like the financial statements, for the extraction step.
+// Find the consolidated profit-and-loss statement and balance sheet (each with the
+// page after it, where statements usually continue), for the extraction step.
+// Reports contain both standalone and consolidated versions, plus many notes that
+// mention the statements, so each statement is located by its own title.
 function statementPages(pages) {
-  const scored = pages.map((text, i) => {
-    const t = text.toLowerCase()
-    let s = 0
-    if (/statement of profit and loss|profit and loss account/.test(t)) s += 3
-    if (/balance sheet/.test(t)) s += 3
-    if (/earnings per (equity )?share/.test(t)) s += 2
-    if (/consolidated/.test(t)) s += 2
-    if (/total equity|shareholders.? funds|capital and liabilities/.test(t)) s += 1
-    if (/revenue from operations|interest earned|total income/.test(t)) s += 1
-    if (/borrowings/.test(t)) s += 1
-    // Statements are dense with numbers; narrative pages are not.
-    const digits = (t.match(/\d/g) || []).length / Math.max(t.length, 1)
-    s += digits > 0.15 ? 2 : 0
-    return { page: i + 1, text, s }
-  })
-  return scored.filter((p) => p.s >= 6).sort((a, b) => b.s - a.s).slice(0, 6).sort((a, b) => a.page - b.page)
+  const best = (titleRe, mustHave) => {
+    let top = null
+    pages.forEach((text, i) => {
+      const t = text.toLowerCase()
+      const at = t.search(titleRe)
+      if (at < 0 || !mustHave.test(t)) return
+      const digits = (t.match(/\d/g) || []).length / Math.max(t.length, 1)
+      if (digits < 0.1) return // statements are dense with numbers; narrative pages are not
+      let s = digits * 20
+      if (/consolidated/.test(t)) s += 6
+      if (/standalone/.test(t.slice(0, 600))) s -= 4
+      if (at < 600) s += 5 // the title sits at the top of a statement page, not deep in a note
+      if (!top || s > top.s) top = { i, s }
+    })
+    return top ? [top.i, top.i + 1].filter((i) => i < pages.length) : []
+  }
+  const pl = best(/statement of profit and loss|profit and loss account/, /earnings per (equity )?share|profit for the (year|period)|net profit/)
+  const bs = best(/balance sheet/, /total (equity|assets)|capital and liabilities|equity and liabilities/)
+  const idx = [...new Set([...pl, ...bs])].sort((a, b) => a - b)
+  return idx.map((i) => ({ page: i + 1, text: pages[i] }))
 }
 
 async function extractFinancials(company, pages) {
@@ -81,7 +91,8 @@ async function extractFinancials(company, pages) {
   if (!picked.length) return console.log('    ! no financial statement pages found')
   const prompt = `Company: ${company.name}${company.is_bank ? ' (a bank)' : ''}.\n\n` +
     picked.map((p) => `--- page ${p.page} ---\n${p.text.slice(0, 7000)}`).join('\n\n')
-  const r = await generateJson({ tier: 'writer', system: EXTRACT_SYSTEM, prompt, schema: EXTRACT_SCHEMA, maxOutputTokens: 2048, thinking: 'medium' })
+  console.log(`    reading statements on pages ${picked.map((p) => p.page).join(', ')}`)
+  const r = await generateJson({ tier: 'writer', system: EXTRACT_SYSTEM, prompt, schema: EXTRACT_SCHEMA, maxOutputTokens: 4096, thinking: 'medium' })
   totalCostInr += r.costInr
   const rows = (r.data.years || [])
     .filter((y) => /^FY\d{4}$/.test(y.fiscal_year))
@@ -158,6 +169,18 @@ async function main() {
       continue
     }
     console.log(`${company.ticker} (${company.name})`)
+    if (financialsOnly) {
+      for (const f of files.filter((f) => describe(f).doc_type === 'annual_report')) {
+        try {
+          const pdf = await getDocumentProxy(new Uint8Array(await readFile(path.join(dir, f))))
+          const { text } = await extractText(pdf, { mergePages: false })
+          await extractFinancials(company, text.map(clean))
+        } catch (err) {
+          console.error(`    ! ${f} failed: ${err.message.split('\n')[0]}`)
+        }
+      }
+      continue
+    }
     for (const f of files) {
       try {
         await ingestFile(company, path.join(dir, f))
