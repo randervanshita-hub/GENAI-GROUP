@@ -161,11 +161,9 @@ async function main() {
       try {
         await ingestFile(company, path.join(dir, f))
       } catch (err) {
-        console.error(`    ! ${f} failed: ${err.message.split('
-')[0]}`)
+        console.error(`    ! ${f} failed: ${err.message.split('\n')[0]}`)
         if (err.dailyQuota) {
-          console.error('
-Stopped: the Gemini daily quota is used up. Enable billing or run again tomorrow; finished files are kept.')
+          console.error('\nStopped: the Gemini daily quota is used up. Enable billing or run again tomorrow; finished files are kept.')
           process.exit(1)
         }
       }
