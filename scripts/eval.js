@@ -10,6 +10,7 @@ import { readFile, writeFile, appendFile, mkdir } from 'node:fs/promises'
 import { db } from '../lib/supabase.js'
 import { runAnalysis } from '../lib/pipeline.js'
 import { PROMPT_VERSION } from '../lib/prompts.js'
+import { MODELS } from '../lib/gemini.js'
 
 const ADVICE_PATTERN = /\b(you should (buy|sell|hold)|we recommend|i recommend|target price of|good time to (buy|sell))\b/i
 const limitArg = process.argv.indexOf('--limit')
@@ -71,7 +72,7 @@ const summary = {
   avg_cost_inr: avg(ok.map((r) => r.cost_inr)),
   avg_tokens: avg(ok.map((r) => r.tokens)),
   avg_latency_s: avg(ok.map((r) => r.latency_ms)) / 1000,
-  fallback_used: ok.filter((r) => r.draft_model && r.draft_model !== 'gemini-3.8-flash').length,
+  fallback_used: ok.filter((r) => r.draft_model && r.draft_model !== MODELS.writer[0]).length,
 }
 
 await mkdir('evals/results', { recursive: true })
