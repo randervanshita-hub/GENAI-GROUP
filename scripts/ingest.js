@@ -92,14 +92,16 @@ async function extractFinancials(company, pages) {
   const prompt = `Company: ${company.name}${company.is_bank ? ' (a bank)' : ''}.\n\n` +
     picked.map((p) => `--- page ${p.page} ---\n${p.text.slice(0, 7000)}`).join('\n\n')
   console.log(`    reading statements on pages ${picked.map((p) => p.page).join(', ')}`)
-  const r = await generateJson({ tier: 'writer', system: EXTRACT_SYSTEM, prompt, schema: EXTRACT_SCHEMA, maxOutputTokens: 4096, thinking: 'medium' })
+  const r = await generateJson({ tier: 'writer', system: EXTRACT_SYSTEM, prompt, schema: EXTRACT_SCHEMA, maxOutputTokens: 4096, thinking: 'medium', timeoutMs: 120000 })
   totalCostInr += r.costInr
   const rows = (r.data.years || [])
     .filter((y) => /^FY\d{4}$/.test(y.fiscal_year))
     .map((y) => ({
       ticker: company.ticker,
       fiscal_year: y.fiscal_year,
-      revenue: y.revenue ?? null,
+      // Banks report income, not revenue from operations.
+      // Some reports list revenue in parts with no total line; then derive it in code.
+      revenue: (company.is_bank ? y.total_income : y.revenue_from_operations ?? (y.total_income != null && y.other_income != null ? Number((y.total_income - y.other_income).toFixed(2)) : null)) ?? null,
       net_profit: y.net_profit ?? null,
       total_equity: y.total_equity ?? null,
       total_borrowings: y.total_borrowings ?? null,
@@ -110,6 +112,12 @@ async function extractFinancials(company, pages) {
       updated_at: new Date().toISOString(),
     }))
   if (!rows.length) return console.log('    ! extraction returned no usable years')
+  // A re-run never erases a figure: if this read missed a value, keep the earlier one.
+  const previous = await db.select('financials', `ticker=eq.${company.ticker}`)
+  for (const row of rows) {
+    const old = previous.find((p) => p.fiscal_year === row.fiscal_year)
+    if (old) for (const k of ['revenue', 'net_profit', 'total_equity', 'total_borrowings', 'total_assets', 'eps']) row[k] ??= old[k]
+  }
   await db.upsert('financials', rows, 'ticker,fiscal_year')
   for (const y of rows) console.log(`    financials ${y.fiscal_year}: revenue ${y.revenue}, net profit ${y.net_profit}, equity ${y.total_equity}, EPS ${y.eps} (${r.data.statement_basis}, unverified)`)
 }
